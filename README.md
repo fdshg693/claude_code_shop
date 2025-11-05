@@ -49,7 +49,25 @@
 - [フロントエンド設計](./docs/frontend/design.md)
 - [インフラ設計](./docs/infrastructure/deployment.md)
 
-## セットアップ（予定）
+## 実装済みのコア機能
+
+### バックエンド
+- ✅ SQLAlchemyデータモデル（User, Product, Category, Order, OrderItem）
+- ✅ Pydanticスキーマ（バリデーション、シリアライゼーション）
+- ✅ Alembicマイグレーション設定
+- ✅ FastAPI基本セットアップ
+- ✅ データベース接続設定
+
+### フロントエンド
+- ✅ TypeScript型定義（User, Product, Category, Order, Cart）
+- ✅ Next.js基本セットアップ
+- ✅ TailwindCSS設定
+
+### インフラ
+- ✅ Docker Compose設定（PostgreSQL, Redis, Backend, Frontend）
+- ✅ 環境変数サンプルファイル
+
+## セットアップ
 
 ```bash
 # リポジトリクローン
@@ -63,18 +81,26 @@ cp frontend/.env.example frontend/.env.local
 # Docker Composeで起動
 docker-compose up -d
 
-# DBマイグレーション実行
+# DBマイグレーション実行（初回のみ）
 docker-compose exec backend alembic upgrade head
 
 # アプリケーションアクセス
-# Frontend: http://localhost
-# Backend API: http://localhost/api/v1
-# API Docs: http://localhost/api/v1/docs
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
 ```
 
 ## 開発ステータス
 
-現在は設計フェーズです。実装は今後進めていきます。
+**フェーズ1: コア実装 ✅ 完了**
+- データモデル、スキーマ、型定義の実装完了
+- インフラセットアップ完了
+
+**フェーズ2: ロジック実装（次のステップ）**
+- APIエンドポイントの実装
+- 認証・認可機能
+- ビジネスロジック
+- フロントエンドコンポーネント
 
 ## ライセンス
 
