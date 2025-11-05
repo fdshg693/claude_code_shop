@@ -1,8 +1,10 @@
+import { CategoryId } from './branded';
+
 export interface Category {
-  id: number;
+  id: CategoryId;
   name: string;
   description?: string;
-  parent_id?: number;
+  parent_id?: CategoryId;
 }
 
 export interface CategoryCreate {

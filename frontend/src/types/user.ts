@@ -1,10 +1,12 @@
+import { UserId } from './branded';
+
 export enum UserRole {
   CUSTOMER = "customer",
   ADMIN = "admin",
 }
 
 export interface User {
-  id: number;
+  id: UserId;
   email: string;
   name: string;
   role: UserRole;
