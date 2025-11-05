@@ -1,5 +1,6 @@
 /**
  * Product service with Result pattern for type-safe error handling
+ * Enhanced with io-ts runtime validation
  */
 
 import axios from 'axios';
@@ -7,6 +8,8 @@ import { Result, ok, err, ResultAsync, fromPromise } from '@/types/result';
 import { Product, ProductCreate, ProductUpdate } from '@/types/product';
 import { ProductId } from '@/types/branded';
 import { ProductError } from '@/types/errors';
+import { ProductSchema, ProductCreateSchema, ProductUpdateSchema } from '@/schemas/product.schema';
+import { validate, validateArray } from '@/utils/validation';
 
 // API base URL (should be moved to environment config)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -14,24 +17,26 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/a
 /**
  * Fetch a single product by ID
  * Returns Result<Product, ProductError> for type-safe error handling
+ * ✅ Enhanced with io-ts runtime validation
  */
 export async function fetchProduct(
   id: ProductId
 ): Promise<Result<Product, ProductError>> {
   try {
-    const response = await axios.get<Product>(`${API_BASE_URL}/products/${id}`);
-    const product = response.data;
+    const response = await axios.get(`${API_BASE_URL}/products/${id}`);
 
-    if (!product) {
-      return err({ type: 'NotFound', productId: id });
+    // ✅ io-tsでランタイムバリデーション
+    const validationResult = validate(ProductSchema, response.data);
+
+    if (validationResult.isErr()) {
+      console.error('Product validation error:', validationResult.error.errors);
+      return err({
+        type: 'NetworkError',
+        message: `Invalid product data: ${validationResult.error.errors.join(', ')}`,
+      });
     }
 
-    // Validate product price
-    if (product.price < 0) {
-      return err({ type: 'InvalidPrice', price: product.price });
-    }
-
-    return ok(product);
+    return ok(validationResult.value);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -48,11 +53,24 @@ export async function fetchProduct(
 /**
  * Fetch all products
  * Returns Result<Product[], ProductError> for type-safe error handling
+ * ✅ Enhanced with io-ts runtime validation
  */
 export async function fetchProducts(): Promise<Result<Product[], ProductError>> {
   try {
-    const response = await axios.get<Product[]>(`${API_BASE_URL}/products`);
-    return ok(response.data);
+    const response = await axios.get(`${API_BASE_URL}/products`);
+
+    // ✅ io-tsで配列のバリデーション
+    const validationResult = validateArray(ProductSchema, response.data);
+
+    if (validationResult.isErr()) {
+      console.error('Products validation error:', validationResult.error.errors);
+      return err({
+        type: 'NetworkError',
+        message: `Invalid products data: ${validationResult.error.errors.join(', ')}`,
+      });
+    }
+
+    return ok(validationResult.value);
   } catch (error) {
     return err({
       type: 'NetworkError',
@@ -63,15 +81,28 @@ export async function fetchProducts(): Promise<Result<Product[], ProductError>> 
 
 /**
  * Fetch products by category
+ * ✅ Enhanced with io-ts runtime validation
  */
 export async function fetchProductsByCategory(
   categoryId: number
 ): Promise<Result<Product[], ProductError>> {
   try {
-    const response = await axios.get<Product[]>(
+    const response = await axios.get(
       `${API_BASE_URL}/products?category_id=${categoryId}`
     );
-    return ok(response.data);
+
+    // ✅ io-tsで配列のバリデーション
+    const validationResult = validateArray(ProductSchema, response.data);
+
+    if (validationResult.isErr()) {
+      console.error('Products validation error:', validationResult.error.errors);
+      return err({
+        type: 'NetworkError',
+        message: `Invalid products data: ${validationResult.error.errors.join(', ')}`,
+      });
+    }
+
+    return ok(validationResult.value);
   } catch (error) {
     return err({
       type: 'NetworkError',
@@ -82,18 +113,37 @@ export async function fetchProductsByCategory(
 
 /**
  * Create a new product
+ * ✅ Enhanced with io-ts runtime validation
  */
 export async function createProduct(
   data: ProductCreate
 ): Promise<Result<Product, ProductError>> {
-  // Validate price before sending
-  if (data.price < 0) {
-    return err({ type: 'InvalidPrice', price: data.price });
+  // ✅ 入力データのバリデーション
+  const inputValidation = validate(ProductCreateSchema, data);
+
+  if (inputValidation.isErr()) {
+    console.error('Product create validation error:', inputValidation.error.errors);
+    return err({
+      type: 'NetworkError',
+      message: `Invalid input data: ${inputValidation.error.errors.join(', ')}`,
+    });
   }
 
   try {
-    const response = await axios.post<Product>(`${API_BASE_URL}/products`, data);
-    return ok(response.data);
+    const response = await axios.post(`${API_BASE_URL}/products`, inputValidation.value);
+
+    // ✅ APIレスポンスのバリデーション
+    const validationResult = validate(ProductSchema, response.data);
+
+    if (validationResult.isErr()) {
+      console.error('Product response validation error:', validationResult.error.errors);
+      return err({
+        type: 'NetworkError',
+        message: `Invalid response data: ${validationResult.error.errors.join(', ')}`,
+      });
+    }
+
+    return ok(validationResult.value);
   } catch (error) {
     return err({
       type: 'NetworkError',
@@ -104,19 +154,38 @@ export async function createProduct(
 
 /**
  * Update a product
+ * ✅ Enhanced with io-ts runtime validation
  */
 export async function updateProduct(
   id: ProductId,
   data: ProductUpdate
 ): Promise<Result<Product, ProductError>> {
-  // Validate price if provided
-  if (data.price !== undefined && data.price < 0) {
-    return err({ type: 'InvalidPrice', price: data.price });
+  // ✅ 入力データのバリデーション
+  const inputValidation = validate(ProductUpdateSchema, data);
+
+  if (inputValidation.isErr()) {
+    console.error('Product update validation error:', inputValidation.error.errors);
+    return err({
+      type: 'NetworkError',
+      message: `Invalid input data: ${inputValidation.error.errors.join(', ')}`,
+    });
   }
 
   try {
-    const response = await axios.put<Product>(`${API_BASE_URL}/products/${id}`, data);
-    return ok(response.data);
+    const response = await axios.put(`${API_BASE_URL}/products/${id}`, inputValidation.value);
+
+    // ✅ APIレスポンスのバリデーション
+    const validationResult = validate(ProductSchema, response.data);
+
+    if (validationResult.isErr()) {
+      console.error('Product response validation error:', validationResult.error.errors);
+      return err({
+        type: 'NetworkError',
+        message: `Invalid response data: ${validationResult.error.errors.join(', ')}`,
+      });
+    }
+
+    return ok(validationResult.value);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -181,10 +250,20 @@ export async function checkStock(
 /**
  * Example: Using ResultAsync for async operations
  * This is an alternative approach using neverthrow's ResultAsync
+ * ✅ Enhanced with io-ts runtime validation
  */
 export function fetchProductAsync(id: ProductId): ResultAsync<Product, ProductError> {
   return fromPromise(
-    axios.get<Product>(`${API_BASE_URL}/products/${id}`).then((res) => res.data),
+    axios.get(`${API_BASE_URL}/products/${id}`).then((res) => {
+      // ✅ io-tsでランタイムバリデーション
+      const validationResult = validate(ProductSchema, res.data);
+
+      if (validationResult.isErr()) {
+        throw new Error(`Invalid product data: ${validationResult.error.errors.join(', ')}`);
+      }
+
+      return validationResult.value;
+    }),
     (error): ProductError => {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 404) {
