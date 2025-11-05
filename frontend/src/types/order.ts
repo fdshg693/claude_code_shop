@@ -1,3 +1,5 @@
+import { OrderId, OrderItemId, UserId, ProductId, Price, Quantity } from './branded';
+
 export enum OrderStatus {
   PENDING = "pending",
   CONFIRMED = "confirmed",
@@ -7,12 +9,12 @@ export enum OrderStatus {
 }
 
 export interface OrderItem {
-  id: number;
-  order_id: number;
-  product_id: number;
-  quantity: number;
-  unit_price: number;
-  subtotal: number;
+  id: OrderItemId;
+  order_id: OrderId;
+  product_id: ProductId;
+  quantity: Quantity;
+  unit_price: Price;
+  subtotal: Price;
 }
 
 export interface OrderItemCreate {
@@ -21,9 +23,9 @@ export interface OrderItemCreate {
 }
 
 export interface Order {
-  id: number;
-  user_id: number;
-  total_amount: number;
+  id: OrderId;
+  user_id: UserId;
+  total_amount: Price;
   status: OrderStatus;
   shipping_address: string;
   created_at: string;
@@ -42,8 +44,8 @@ export interface OrderUpdate {
 }
 
 export interface OrderList {
-  id: number;
-  total_amount: number;
+  id: OrderId;
+  total_amount: Price;
   status: OrderStatus;
   created_at: string;
 }

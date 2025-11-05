@@ -1,11 +1,13 @@
+import { UserId, ProductId, Quantity } from './branded';
+
 export interface CartItem {
-  product_id: number;
-  quantity: number;
+  product_id: ProductId;
+  quantity: Quantity;
   added_at: string;
 }
 
 export interface Cart {
-  user_id: number;
+  user_id: UserId;
   items: CartItem[];
   expires_at: string;
 }
